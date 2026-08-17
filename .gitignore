@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+
+ml/data/physionet/
+ml/data/physionet_dataset.csv
+
+ml/samples/*.wav
+
+training.zip
+*.crdownload
+
+.DS_Store
+Thumbs.db
