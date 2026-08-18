@@ -104,6 +104,42 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  uploadAudio: async (
+    file: File,
+  ): Promise<{ audio_reference: string; filename: string; size_bytes: number }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}/api/audio/upload`, {
+        method: "POST",
+        body: formData,
+      });
+    } catch {
+      throw new ApiError("Unable to connect to EchoAssist backend.", 0);
+    }
+
+    if (!res.ok) {
+      let errorDetail = `Upload failed with status ${res.status}`;
+      try {
+        const errorJson = (await res.json()) as { detail?: string };
+        if (errorJson && typeof errorJson.detail === "string") {
+          errorDetail = errorJson.detail;
+        }
+      } catch {
+        // Non-JSON response
+      }
+      throw new ApiError(errorDetail, res.status);
+    }
+
+    return (await res.json()) as {
+      audio_reference: string;
+      filename: string;
+      size_bytes: number;
+    };
+  },
 };
 
 export const queries = {

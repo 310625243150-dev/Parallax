@@ -4,3 +4,6 @@ __pycache__/
 .env
 
 echoassist.db
+
+# Runtime uploaded audio files
+Audio/input/upload_*.wav

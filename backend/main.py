@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database.database import Base, engine
 from routes.patients import router as patients_router
 from routes.examinations import router as examinations_router
+from routes.audio import router as audio_router
 
 # Import models so SQLAlchemy creates tables
 import models  # noqa: F401
@@ -36,6 +37,7 @@ app.add_middleware(
 # Register API routers
 app.include_router(patients_router)
 app.include_router(examinations_router)
+app.include_router(audio_router)
 
 
 @app.get("/", tags=["Health"])

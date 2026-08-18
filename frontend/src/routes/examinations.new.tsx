@@ -1,7 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, FileAudio, GitCompareArrows } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  FileAudio,
+  GitCompareArrows,
+  Mic,
+  UploadCloud,
+} from "lucide-react";
 
 import { AppShell } from "@/components/echoassist/AppShell";
 import {
@@ -16,6 +24,7 @@ import {
   StatusBadge,
 } from "@/components/echoassist/primitives";
 import { AudioRecorder, AudioReviewCard } from "@/components/echoassist/AudioRecorder";
+import { AudioUploader } from "@/components/echoassist/AudioUploader";
 import { BENCHMARK_AUDIO_REFERENCE } from "@/lib/echoassist/audioReferenceService";
 import { EcgTrace } from "@/components/echoassist/Waveform";
 import { Button } from "@/components/ui/button";
@@ -246,6 +255,7 @@ function NewExamination() {
   const [patientId, setPatientId] = useState<string>(search.patientId ?? "");
   const [location, setLocation] = useState<string>("Mitral");
   const [notes, setNotes] = useState("");
+  const [audioSource, setAudioSource] = useState<"record" | "upload" | "benchmark">("record");
   const [recording, setRecording] = useState<{
     audioReference: string;
     durationSeconds: number;
@@ -383,14 +393,82 @@ function NewExamination() {
             </p>
           </SectionCard>
 
-          <SectionCard title="02 · Audio Recording">
-            <AudioRecorder
-              location={location}
-              onComplete={(result) => {
-                setRecording(result);
-                setStep(2);
-              }}
-            />
+          <SectionCard
+            title="02 · Cardiac Auscultation Audio"
+            description="Provide original auscultation audio for ML analysis"
+          >
+            <div className="mb-5 flex flex-wrap gap-2 border-b border-border pb-3">
+              <Button
+                type="button"
+                variant={audioSource === "record" ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setAudioSource("record")}
+              >
+                <Mic className="h-4 w-4" aria-hidden />
+                Record Audio
+              </Button>
+              <Button
+                type="button"
+                variant={audioSource === "upload" ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setAudioSource("upload")}
+              >
+                <UploadCloud className="h-4 w-4" aria-hidden />
+                Upload WAV
+              </Button>
+              <Button
+                type="button"
+                variant={audioSource === "benchmark" ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setAudioSource("benchmark")}
+              >
+                <FileAudio className="h-4 w-4" aria-hidden />
+                Use Benchmark ({BENCHMARK_AUDIO_REFERENCE})
+              </Button>
+            </div>
+
+            {audioSource === "record" ? (
+              <AudioRecorder
+                location={location}
+                onComplete={(result) => {
+                  setRecording(result);
+                  setStep(2);
+                }}
+              />
+            ) : audioSource === "upload" ? (
+              <AudioUploader
+                onComplete={(result) => {
+                  setRecording(result);
+                  setStep(2);
+                }}
+              />
+            ) : (
+              <div className="rounded-xl border border-border bg-card p-6 text-center">
+                <FileAudio className="mx-auto h-10 w-10 text-secondary" />
+                <h4 className="mt-3 text-sm font-semibold">Benchmark Auscultation File</h4>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  {BENCHMARK_AUDIO_REFERENCE}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Verified sample file residing in backend storage for validating real ML pipeline
+                  inference.
+                </p>
+                <Button
+                  className="mt-4"
+                  size="sm"
+                  onClick={() => {
+                    setRecording({
+                      audioReference: BENCHMARK_AUDIO_REFERENCE,
+                      durationSeconds: 15,
+                    });
+                    setStep(2);
+                  }}
+                >
+                  Select {BENCHMARK_AUDIO_REFERENCE} & Continue
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Button>
+              </div>
+            )}
           </SectionCard>
         </div>
       ) : null}

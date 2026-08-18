@@ -185,3 +185,40 @@ def test_patient_comparison_nonexistent(client):
     """Test 404 on comparison for non-existent patient."""
     response = client.get("/api/patients/NOBODY/comparison")
     assert response.status_code == 404
+
+
+def test_audio_upload_valid_wav(client):
+    """Test POST /api/audio/upload with valid WAV bytes."""
+    # Construct minimal valid PCM WAV bytes
+    wav_header = (
+        b"RIFF" + (36).to_bytes(4, "little") +
+        b"WAVEfmt " + (16).to_bytes(4, "little") +
+        (1).to_bytes(2, "little") + (1).to_bytes(2, "little") +
+        (44100).to_bytes(4, "little") + (88200).to_bytes(4, "little") +
+        (2).to_bytes(2, "little") + (16).to_bytes(2, "little") +
+        b"data" + (0).to_bytes(4, "little")
+    )
+    files = {"file": ("test_heart_sound.wav", wav_header, "audio/wav")}
+    response = client.post("/api/audio/upload", files=files)
+    assert response.status_code == 201
+    data = response.json()
+    assert "audio_reference" in data
+    assert data["audio_reference"].endswith(".wav")
+    assert data["filename"] == "test_heart_sound.wav"
+    assert data["size_bytes"] == len(wav_header)
+
+
+def test_audio_upload_invalid_extension(client):
+    """Test POST /api/audio/upload rejects non-WAV extensions."""
+    files = {"file": ("test_audio.mp3", b"fake mp3 data", "audio/mpeg")}
+    response = client.post("/api/audio/upload", files=files)
+    assert response.status_code == 400
+    assert "Only WAV (.wav) files are supported" in response.json()["detail"]
+
+
+def test_audio_upload_invalid_wav_header(client):
+    """Test POST /api/audio/upload rejects invalid WAV header."""
+    files = {"file": ("corrupted.wav", b"This is not a real RIFF/WAVE file", "audio/wav")}
+    response = client.post("/api/audio/upload", files=files)
+    assert response.status_code == 400
+    assert "Invalid WAV file header" in response.json()["detail"]

@@ -96,3 +96,50 @@ def test_real_ml_pipeline_history_and_comparison(client):
     comparison = comp_res.json()
     assert comparison["has_previous"] is True
     assert comparison["current_diagnosis"] in ["Normal Heart Sound", "Abnormal Heart Sound"]
+
+
+def test_upload_and_analyze_real_wav(client):
+    """Test full flow: Upload original WAV file -> get audio_reference -> analyze via real ML pipeline."""
+    from pathlib import Path
+    project_root = Path(__file__).resolve().parent.parent.parent
+    sample_wav_path = project_root / "Audio" / "input" / "a0001.wav"
+
+    assert sample_wav_path.exists(), f"Sample WAV not found at {sample_wav_path}"
+
+    # 1. Create patient
+    client.post("/api/patients", json={
+        "id": "PAT-UPLOAD-001",
+        "name": "Upload Test Patient",
+        "age": 48,
+        "gender": "Male"
+    })
+
+    # 2. Upload the real WAV file
+    with open(sample_wav_path, "rb") as f:
+        wav_bytes = f.read()
+
+    upload_res = client.post("/api/audio/upload", files={"file": ("uploaded_patient_recording.wav", wav_bytes, "audio/wav")})
+    assert upload_res.status_code == 201
+    upload_data = upload_res.json()
+    assert "audio_reference" in upload_data
+    uploaded_ref = upload_data["audio_reference"]
+
+    # 3. Analyze using the returned audio_reference
+    analyze_payload = {
+        "patient_id": "PAT-UPLOAD-001",
+        "audio_reference": uploaded_ref,
+        "notes": "Uploaded WAV ML integration test"
+    }
+    response = client.post("/api/examinations/analyze", json=analyze_payload)
+    assert response.status_code == 201
+    result = response.json()
+
+    assert "examination" in result
+    exam = result["examination"]
+    assert exam["patient_id"] == "PAT-UPLOAD-001"
+    assert exam["audio_reference"] == uploaded_ref
+    assert exam["diagnosis"] in ["Normal Heart Sound", "Abnormal Heart Sound"]
+    assert isinstance(exam["confidence"], float)
+    assert 0.0 <= exam["confidence"] <= 1.0
+    assert exam["signal_quality"] in ["Good", "Fair", "Poor"]
+    assert exam["model_version"] == "v1.0.0-rf"

@@ -6,23 +6,51 @@
  * - The backend ML pipeline (`predict_for_api(file_path)`) resolves this string to an audio file
  *   on the server and runs internal preprocessing and feature extraction directly on the ORIGINAL WAV.
  * - Browser-recorded audio is stored in ephemeral browser memory for local playback preview only.
- *   Browser-recorded audio is NOT yet ML-ready until persistent backend audio upload/storage is implemented.
+ * - Original WAV file uploads are handled via `POST /api/audio/upload`, which saves the unmodified
+ *   WAV to backend audio storage and returns an `audio_reference` string for analysis.
  *
  * Benchmark Support:
  * - Direct reference to backend benchmark files (such as `a0001.wav`) is supported for testing
  *   the real ML pipeline without preprocessing.
- *
- * Remaining Integration Task:
- * - Persistent browser-audio upload endpoint (e.g. multipart/form-data upload or presigned S3 URL)
- *   so that newly recorded browser audio can be uploaded to backend storage before analysis.
  */
 
 export const BENCHMARK_AUDIO_REFERENCE = "a0001.wav";
+
+export const MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 export interface AudioRecordingPayload {
   audioReference: string;
   durationSeconds: number;
   objectUrl?: string;
+  filename?: string;
+}
+
+/**
+ * Validates selected file is a .wav file and does not exceed size limit.
+ */
+export function validateWavFile(file: File): { valid: boolean; error?: string } {
+  if (!file.name.toLowerCase().endsWith(".wav")) {
+    return { valid: false, error: "Only WAV (.wav) audio files are supported." };
+  }
+  if (file.size === 0) {
+    return { valid: false, error: "The selected audio file is empty." };
+  }
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    return {
+      valid: false,
+      error: `File size exceeds the 25MB maximum limit (${formatFileSize(file.size)}).`,
+    };
+  }
+  return { valid: true };
+}
+
+/**
+ * Formats byte count to human-readable string.
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /**
