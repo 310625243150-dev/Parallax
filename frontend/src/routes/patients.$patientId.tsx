@@ -92,6 +92,12 @@ function PatientProfile() {
                     View History
                   </Link>
                 </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/longitudinal-analysis" search={{ patientId }}>
+                    <Activity className="h-4 w-4" aria-hidden />
+                    Longitudinal Analysis
+                  </Link>
+                </Button>
                 <Button variant="ghost" asChild>
                   <Link to="/comparison/$patientId" params={{ patientId }}>
                     <GitCompareArrows className="h-4 w-4" aria-hidden />

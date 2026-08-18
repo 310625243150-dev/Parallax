@@ -193,3 +193,34 @@
     transform: scaleY(1);
   }
 }
+
+@media print {
+  aside,
+  nav,
+  header button,
+  [role="tablist"],
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .shadow-card,
+  .shadow-sm,
+  .shadow-md {
+    box-shadow: none !important;
+  }
+
+  .border {
+    border-color: #e2e8f0 !important;
+  }
+
+  [role="tabpanel"] {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    page-break-inside: avoid;
+  }
+}

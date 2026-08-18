@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronDown, GitCompareArrows } from "lucide-react";
+import { Activity, ChevronDown, GitCompareArrows } from "lucide-react";
 
 import { AppShell } from "@/components/echoassist/AppShell";
 import {
@@ -68,12 +68,20 @@ function HistoryPage() {
         subtitle="Review every recorded examination for a patient."
         actions={
           patientId ? (
-            <Button variant="outline" asChild>
-              <Link to="/comparison/$patientId" params={{ patientId }}>
-                <GitCompareArrows className="h-4 w-4" aria-hidden />
-                Compare
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/longitudinal-analysis" search={{ patientId }}>
+                  <Activity className="h-4 w-4 mr-1.5" />
+                  Longitudinal Analysis
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/comparison/$patientId" params={{ patientId }}>
+                  <GitCompareArrows className="h-4 w-4" aria-hidden />
+                  Compare
+                </Link>
+              </Button>
+            </div>
           ) : null
         }
       />

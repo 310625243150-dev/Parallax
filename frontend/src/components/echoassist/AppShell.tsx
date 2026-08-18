@@ -24,6 +24,7 @@ const NAV = [
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/examinations", label: "Examinations", icon: ClipboardList },
   { to: "/history", label: "History", icon: History },
+  { to: "/longitudinal-analysis", label: "Longitudinal Analysis", icon: Activity },
 ] as const;
 
 const NAV_BOTTOM = [
