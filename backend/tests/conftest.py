@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from main import app
 from database.database import Base, get_db
+from services.ml_adapter import set_ml_adapter, MockMLAdapter, RealMLAdapter
 
 # Use in-memory SQLite database for test isolation
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -31,7 +32,7 @@ def db_session():
 
 
 @pytest.fixture(scope="function")
-def client(db_session):
+def client(db_session, request):
     """Return FastAPI TestClient with overridden database dependency."""
     def _override_get_db():
         try:
@@ -39,7 +40,14 @@ def client(db_session):
         finally:
             pass
 
+    if "test_api.py" in str(request.node.fspath):
+        set_ml_adapter(MockMLAdapter())
+    else:
+        set_ml_adapter(RealMLAdapter())
+
     app.dependency_overrides[get_db] = _override_get_db
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
